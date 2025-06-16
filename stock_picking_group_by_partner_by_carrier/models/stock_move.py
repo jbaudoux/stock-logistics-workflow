@@ -73,7 +73,7 @@ class StockMove(models.Model):
         if (
             not self.picking_type_id.group_pickings
             or self.partner_id.disable_picking_grouping
-            or self.group_id.sale_id.picking_policy == "one"
+            # or self.group_id.sale_id.picking_policy == "one"
         ):
             return domain
 
