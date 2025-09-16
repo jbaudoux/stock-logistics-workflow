@@ -155,7 +155,7 @@ class MakePickingBatch(models.TransientModel):
 
     def _get_picking_domain_common(self):
         domain = [
-            ("state", "in", ("partially_available", "assigned")),
+            ("state", "=", "assigned"),
             ("batch_id", "=", False),
             ("user_id", "in", [self.user_id.id, False] if self.user_id else [False]),
         ]

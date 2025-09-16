@@ -57,6 +57,11 @@ class StockMove(models.Model):
                 moves = self.browse(m.id for m in imoves)
                 moves.picking_id._update_merged_origin()
                 moves._on_assign_picking_message_link()
+        # clear SO pickings cache to ensure action_confirm is called
+        # the m2m relation from picking to sale is a computed with depends but
+        # the reverse relation is not defined as computed, so we need to clear
+        # cache to ensure
+        self.picking_id.flush_recordset(["sale_ids"])
         res = super()._assign_picking_post_process(new=new)
         return res
 
