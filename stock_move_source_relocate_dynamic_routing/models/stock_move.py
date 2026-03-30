@@ -12,7 +12,6 @@ class StockMove(models.Model):
     _inherit = "stock.move"
 
     def _after_apply_source_relocate_rule(self):
-        super()._after_apply_source_relocate_rule()
-        result = self._chain_apply_routing()
+        self._chain_apply_routing(merge=True)
         _logger.debug("Dynamic routing applied on relocated moves %s", self.ids)
-        return result
+        super()._after_apply_source_relocate_rule()
