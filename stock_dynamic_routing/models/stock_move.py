@@ -38,7 +38,7 @@ class StockMove(models.Model):
             self.filtered(lambda r: r.state == "waiting")._chain_apply_routing()
         return result
 
-    def _chain_apply_routing(self):
+    def _chain_apply_routing(self, merge=False):
         """Apply routing on moves waiting for another one in a chained flow
 
         When the first move of a chain is reserved, it might trigger a change
@@ -59,7 +59,7 @@ class StockMove(models.Model):
             else:
                 moves_with_routing_details[move] = self._no_routing_details()
 
-        self._apply_routing_rule_pull(moves_with_routing_details)
+        self._apply_routing_rule_pull(moves_with_routing_details, merge=merge)
         self._apply_routing_rule_push(moves_with_routing_details)
 
     def _action_assign(self, force_qty=False):
@@ -250,7 +250,7 @@ class StockMove(models.Model):
 
         return moves_with_routing_details
 
-    def _apply_routing_rule_pull(self, routing_details):
+    def _apply_routing_rule_pull(self, routing_details, merge=False):
         """Apply pull dynamic routing
 
         When a move has a dynamic routing configured on its location and the
@@ -337,7 +337,15 @@ class StockMove(models.Model):
                     routing_to_apply.append((routing_move, routing_rule))
 
             pickings_to_check_for_emptiness |= move.picking_id
+            picking = move.picking_id
             move._assign_picking()
+            if merge and picking != move.picking_id:
+                # Used by stock_move_source_relocate_dynamic_routing
+                # When the unassigned move is routed in the same picking as the
+                # assigned move, merge back the assigned move into the assigned
+                # move. Ensure the current move do not disappear as we are
+                # inside _action_assign
+                (move.picking_id.move_ids - move)._merge_moves(merge_into=move)
             move_ids_to_assign_per_location[move.location_id].append(move.id)
 
         # We have two kind of "routed" moves:
